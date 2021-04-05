@@ -1,8 +1,8 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-  html_document:
-    keep_md: true
+  html_document: 
+    keep_md: yes
 ---
 Author: Kingsley O. Akpeji
 
@@ -58,7 +58,10 @@ steps_dt$date <- ymd(steps_dt$date)
 Group data by month and day, and calculate total number of steps taken per day.
 
 ```r
-tot_steps_day <- steps_dt %>% group_by(month(date), day(date)) %>% 	summarise(total_steps = sum(steps, na.rm = T))
+steps_day <- steps_dt %>% group_by(month(date), day(date))
+names(steps_day) <- c("steps", "date", "interval", "month", "day")
+
+tot_steps_day <- steps_day %>% summarise(total_steps = sum(steps, na.rm = T))
 ```
 
 Plot histogram of total number of steps taken per day.
@@ -82,7 +85,7 @@ mean_tot_steps_day <- mean(tot_steps_day$total_steps)
 med_tot_steps_day <- median(tot_steps_day$total_steps)
 ```
 
-The mean and median total number of steps taken each day are `{r} mean_tot_steps_day` and `{r} median_tot_steps_day`, respectively.
+The mean and median total number of steps taken each day are 9354.2295082 and 10395, respectively.
 
 ## What is the average daily activity pattern?
 
@@ -90,24 +93,41 @@ The following time series plot shows the average daily activity pattern of the i
 
 
 ```r
-ave_act_day <- steps_dt %>% group_by(month(date), day(date), interval) %>%  summarise(ave_steps_int = mean(steps, na.rm = T))
+ave_act_day <- steps_day %>% group_by(interval) %>% 
+	summarise(ave_steps_int = mean(steps, na.rm = T))
 ```
-
-The 5-minute interval with the largest number of steps on average, across all days is obtained thus:
 
 
 ```r
-ave_act_day$interval[ave_act_day$ave_steps == max(ave_act_day$ave_steps)]
+p_ave_act_day <- ggplot(ave_act_day, aes(interval, ave_steps_int))
+p_ave_act_day + geom_line() + 
+	labs(x = "Interval", y = "Average number of steps", 
+		title = "Average number of steps in each 5-min interval of a typical day") +
+	theme(plot.title = element_text(hjust = 0.5))
 ```
 
-integer(0)
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+The 5-minute interval with the largest number of steps on average, across all days 
+is obtained thus:
+
+
+```r
+ave_act_day$interval[ave_act_day$ave_steps_int == max(ave_act_day$ave_steps_int)]
+```
+
+[1] 835
 
 
 ## Imputing missing values
-tot_NA <- sum(!complete.cases(steps_dt))
-p_NA <- mean(is.na(steps_dt$steps))
 
-The total number of rows missing values in the dataset is `{r} tot_NA`, i.e. `{r}p_NA`% of rows.
+
+```r
+tot_NA <- sum(!complete.cases(steps_dt))
+p_NA <- round(mean(is.na(steps_dt$steps)) * 100, 2)
+```
+
+The total number of rows missing values in the dataset is 2304, i.e. 13.11% of rows.
 
 The missing values in the dataset were filled using the mean for the corresponding 5-minute interval.
 
@@ -138,7 +158,7 @@ p_steps_day2 + geom_histogram() +
 	theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 Recalculate mean and median of total steps per day.
 
@@ -148,7 +168,7 @@ med_tot_steps_day2 <- median(tot_steps_day2$total_steps2)
 ```
 
 After imputing missing values, the mean and median total number of steps are
-`{r} mean_tot_steps_day2` and `{r}median_tot_steps_day2`, respectively.
+1.0766189\times 10^{4} and 1.0766189\times 10^{4}, respectively.
 
 The impact of imputing missing data on the estimates of the total daily number of steps is illustrated using the barplot below.
 
@@ -166,7 +186,7 @@ barplot(tot_mean_med, col = bplt_col, legend.text = bplt_legend,
 	   args.legend = list(x = "right"))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 The barplot shows that, after imputing missing values, the median and mean of the total number of steps increased slightly.
 
@@ -200,6 +220,6 @@ xyplot(ave_steps ~ interval | day_type, data = ave_act_dayty, layout = c(1,2),
 	  xlab = "5-minute interval", ylab = "Average number of steps")
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](PA1_template_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 The panel plot shows that the individual's activity patterns on weekdays and weekend are similar between 0000 - 1000 and 2100 - 2355. Activity is lowest in the early morning hours and towards midnight, and highest between the 0700 - 1000 interval on both weekdays and weekdays. Perhaps, the individual does some morning jogging and moves more frequently between 0700 - 1000. Activity between 1000 - 2200 on weekend is higher than that of weekday, indicating that the individual is more 'feet-mobile' during this period on weekends than on weekends.
